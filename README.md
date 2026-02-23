@@ -75,7 +75,7 @@ There is many tutorials about howto install/use PlatformIO for ESP32.
 
 This diagram shows the basic connections required to run the emulator on the ESP32-S3-WROOM-1 development board.
 
-![Wiring Diagram](docs/wiring/FREENOVE_SETUP.jpg)
+<img src="docs/wiring/FREENOVE_SETUP.jpg" alt="Wiring Diagram" width="400"/>
 
 ---
 
