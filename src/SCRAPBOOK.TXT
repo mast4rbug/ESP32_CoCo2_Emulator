@@ -1,0 +1,48 @@
+
+lwasm helloasm.asm -fdecb -ohelloasm.bin
+&HA027 = basic execution after reset (poke 113,0: exec 40999)
+
+
+$0000 - $7FFF	RAM utilisateur (32K ou 64K)	RAM
+$8000 - $9FFF	Extended BASIC (extbas11.rom)	ROM
+$A000 - $BFFF	Color BASIC (bas13.rom)	ROM
+$C000 - $DFFF	Disk BASIC (disk.rom)	ROM
+$E000 - $FFFF	Kernel (interruptions, boot)	ROM
+
+&H112 et &H113 = timer
+IRQ 10d et 10e Jmp to &HD8AF
+
+COCO2:
+10C-10E = 7E D8AF
+FFF8-FFF9 = 010C
+
+Execution address of a program loaded from disk is at address $009d:$009e
+
+(This is from my own observations - may be wrong for long files - GeK )
+(No load address is given - I presume it uses the default at $0025:$0026)
+Offset:
+0x00		0xff	(?? flag for Basic)
+0x01 : 0x02	length in bytes of following data
+0x03 -		tokenised data - see file basicfmt.txt
+
+Machine Language files
+----------------------
+
+Header:
+0x00		0x00
+0x01 : 0x02	length in bytes of following data
+0x03 : 0x04	load address of data
+
+Tail:
+0x00		0xff
+0x01 : 0x02	0x0000	(?? why - data length ?)
+0x03 : 0x04	EXEC address
+
+Non-Segmented files consist of
+	[header] [data] [tail]
+
+Segmented m/l files consist of
+	[header] [data] [header] [data] .... [header] [data] [tail]
+
+
+

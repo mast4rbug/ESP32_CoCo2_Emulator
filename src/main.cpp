@@ -47,6 +47,34 @@
 
 
 
+
+USB_DEVICES_CTRL USB_DEV_CONTROL;
+
+
+  
+  #define DP_P0  18  // always enabled
+  #define DM_P0  17  // always enabled
+  #define DP_P1  16
+  #define DM_P1  15
+  #define DP_P2  12
+  #define DM_P2  11
+  #define DP_P3  -1
+  #define DM_P3  -1
+
+
+extern USB_DEVICES_CTRL USB_DEV_CONTROL;
+
+extern void Setup_USB(void);
+
+
+
+
+
+//-----------------------------------------------------------
+
+
+
+
 #define EEPROM_SIZE 2048
 
 
@@ -94,29 +122,6 @@ uint8_t ResetVectors[16] = {0xA6, 0x81, 0x01, 0x00, 0x01, 0x03, 0x01, 0x0F,
 
 
 
-USB_DEVICES_CTRL USB_DEV_CONTROL;
-
-
-  
-  #define DP_P0  18  // always enabled
-  #define DM_P0  17  // always enabled
-  #define DP_P1  16
-  #define DM_P1  15
-  #define DP_P2  12
-  #define DM_P2  11
-  #define DP_P3  -1
-  #define DM_P3  -1
-
-
-extern USB_DEVICES_CTRL USB_DEV_CONTROL;
-
-extern void Setup_USB(void);
-
-
-
-
-
-//-----------------------------------------------------------
 
 bool CPU_in_WAIT_STATE = false;
 
@@ -148,34 +153,6 @@ uint8_t memory[65536];
 #endif
 
 
-    /*
-    KeyList for direct interface (KeyCode):
-    UP: 82
-    DOWN: 81
-    LEFT: 80
-    RIGHT: 70
-    F12: 69
-    1: 30
-    2: 31
-    2: 32
-    2: 33
-    2: 34
-    2: 35
-    2: 36
-    2: 37
-    2: 38
-    2: 39
-    ESC: 41
-    */
-    
-
-
-
-#define JOY1_B1 46
-#define JOY1_B2 17
-#define JOY2_B1 3
-#define JOY2_B2 45
-
 
 SpecialFunctionStruct sf;
 
@@ -202,9 +179,6 @@ DriveStruct Disk_Drive;
 
 
 
-//extern uint8_t rom[];
-
-
   class cpu_t : public mc6809 
 {
   public:
@@ -219,7 +193,7 @@ DriveStruct Disk_Drive;
       {
         if ((address > 0x7fff))
         {
-          // Accès à la ROM ou I/O (souvent entre $FF00-$FFFF)
+
           return rom[address - ROM_OFFSET];
         }
         else
@@ -249,7 +223,7 @@ DriveStruct Disk_Drive;
       void write8(uint16_t address, uint8_t value) const 
       {
           ManagePeripherals_Write(address , value);
-          //if (address >0xff00)
+
 
         if (!sf.CoCo2_32K_UPPER_ENABLED)
         {
@@ -478,116 +452,22 @@ void DoCPU(void)
 void CopyDiskToRamDisk(void)
 {
 
-  //ReadCoCoFile("/GAMES02.DSK");
   ReadCoCoFile((const char*)Disk_Drive.Name_Disk[0], 0);
   ReadCoCoFile((const char*)Disk_Drive.Name_Disk[1], 1);
   ReadCoCoFile((const char*)Disk_Drive.Name_Disk[2], 2);
   ReadCoCoFile((const char*)Disk_Drive.Name_Disk[3], 3);
   
-  /*
-  for (uint32_t loop1 = 0; loop1 !=161280; loop1++)
-  {
-    RAM_Disk0[loop1] = Disk0[loop1];
-    RAM_Disk1[loop1] = Disk1[loop1];
-  }
-  */
 }
 
 
-#define WAIT_DEBUG 20
-void DiskDebugRead(uint16_t address)
-{
-  
-  switch (address)
-  {
-    case 0xff40:
-    case 0xff48:
-    case 0xff49:
-    case 0xff4a:
-    case 0xff4b:
-    Serial.print("Req read Addr: $");
-    Serial.print(address, HEX);
-    Serial.print(" Read Val: ");
-    //Serial.print()
-    Serial.print("  PC POSITION: ");
-    Serial.print(cpu.get_pc(),HEX);
-    Serial.print(" Val: ");
-    Serial.print(sf.nmi_pin);
-    Serial.print(" ");
-
-    vTaskDelay(WAIT_DEBUG);
-    break;
-  
-  default:
-    break;
-  }
-
-}
-
-void DiskDebugWrite(uint16_t address, uint8_t value)
-{
-  switch (address)
-  {
-    case 0xff40:
-    case 0xff48:
-    case 0xff49:
-    case 0xff4A:
-    case 0xff4B:
-    Serial.print("Req write Addr: $");
-    Serial.print(address,HEX);
-    Serial.print(" write Date: $");
-    Serial.print(value,HEX);
-    Serial.print(" (0b");
-    for (int i = 7; i >= 0; i--) 
-    {
-      Serial.print((value >> i) & 1);
-    }
-    Serial.print(")");
-    Serial.print("  PC POSITION: ");
-    Serial.println(cpu.get_pc(),HEX);
-    vTaskDelay(WAIT_DEBUG);
-    break;
-  
-  default:
-    break;
-  }
-
-}
 
     const PinConfig pins(0,0,0,8,9,  0,0,0,6, 7, 0,  0,0,0,4,5,  1,2);
 //                             B B X       G  G  X         R  R
     //6 bit mode for Coco 3    0 1 X       0  1  X         0  1
 
-
-/*
-VGA connector:
-
-1 RED - noir
-2 GREN - brun
-3 BLUE - rouge
-13 HS - rose
-14 VS - Bleu Turquoise
-5 GND - Jaune
-*/
-
-
-/*
-Pins for 8 bit mode:
-RED: 6, 7, 8
-GREEN: 12, 13, 14
-BLUE: 18, 21
-*/
-
-
-//VGA Device
-//Mode mode = Mode::MODE_640x240x60;
-
-
 VGA* vga;
 GfxWrapper<VGA> *gfx;
 
-//Mode mode = Mode::MODE_320x240x60;
-//GfxWrapper<VGA> gfx(vga, mode.hRes, mode.vRes);
 
 Mode mode0 = Mode::MODE_320x240x60;
 Mode mode1 = Mode::MODE_320x240x60_4_3;
@@ -603,13 +483,11 @@ uint8_t SCAN_Keyboard_Matrix[8][7];
 uint8_t ReadCoCoButtons(void)
 {
   uint8_t val1, val2;
-  //val1 = digitalRead(JOY1_B1);
-  //val2 = (digitalRead(JOY2_B1)<<1);
   val1 = USB_DEV_CONTROL.JOY1_BUTT1;
   val2 = USB_DEV_CONTROL.JOY2_BUTT1<<1;
 
   return val1 | val2;
-  //return 3;
+  
 }
 
 void InitSD_Card1(void)
@@ -678,7 +556,6 @@ void InitPeripherals_and_Others(void)
   Serial.begin(921600);
   delay(10);
   
-  //InitSD_Card();
   InitSD_Card();
   InitDisks();
 
@@ -720,58 +597,17 @@ void InitPeripherals_and_Others(void)
   DiskAccess.NMI_Int_Started = false;
   DiskAccess.NMI_Delay = 0;
 
-  ledcSetup (0, 40000, 8);  // configurer canal
+  ledcSetup (0, 40000, 8);  // PWM Sound Configuration
   ledcAttachPin(47, 0);                   //
   ledcWrite(0,127);
 
 
-  //WiFi.disconnect(true);
-  //WiFi.mode(WIFI_OFF);
   analogReadResolution(8);
-  //pinMode(JOY1_X_AN_PIN, INPUT);
-  //pinMode(JOY1_Y_AN_PIN, INPUT);
-  //pinMode(JOY2_X_AN_PIN, INPUT);
-  //pinMode(JOY2_Y_AN_PIN, INPUT);
-  
-  //pinMode(JOY1_B1,INPUT_PULLUP);
-  //pinMode(JOY1_B2,INPUT_PULLUP);
-
-  //pinMode(JOY2_B1,INPUT_PULLUP);
-  //pinMode(JOY2_B2,INPUT_PULLUP);
-
-  
-  /*
-  while(1)
-  {
-    //Serial.println(ReadJoysticks(3));
-    Serial.print(analogRead(JOY1_X_AN_PIN));
-    Serial.print(", ");
-    Serial.print(analogRead(JOY1_Y_AN_PIN));
-    Serial.print(", ");
-    Serial.print(analogRead(JOY2_X_AN_PIN));
-    Serial.print(", ");
-    Serial.println(analogRead(JOY2_Y_AN_PIN));
-    delay(50);
-  }
-*/
-
 
   CopyCoCo2ROMS();
   //CopyCoCo3ROMS();
 	
   CopyDiskToRamDisk();
-
-  //BuildMapFromArray();  //Built Coco2 VDG charMap;
-
-  //DumpMap();
-
-
-
-  #define DebugPin 48
-
-
-  //pinMode(DebugPin,OUTPUT);
-  
   
   vga = new VGA();
   gfx = new GfxWrapper<VGA>(*vga, mode1.hRes, mode1.vRes);
@@ -784,24 +620,6 @@ void InitPeripherals_and_Others(void)
   //SetVideoMode(VIDEO_MODE_320X240_16_9);
   //SetVideoMode(VIDEO_MODE_640X240_16_9);
   //SetVideoMode(VIDEO_MODE_640X240_4_3);
-
-/*
-    pinMode(9,OUTPUT);
-    pinMode(11,OUTPUT);
-    while(1)
-    {
-      digitalWrite(9,HIGH);
-      vga->clear(0b00000000);
-      vga->show();
-      delay(500);
-      digitalWrite(9,LOW);
-      vga->clear(0b00000000);
-      vga->show();
-      delay(500);
-      
-    }
-*/
-
 
 }
 
@@ -838,7 +656,6 @@ void SetVideoMode(uint8_t VideoMode)
 
 
 const int Field_Synch_Interrupt_PIN = 2;  // VSynch pin
-//const int Field_Synch_Interrupt_PIN = DEBUG2;  // VSynch pin
 
 
 void IRAM_ATTR Field_Synch_Interrupt_Flag() 
@@ -851,7 +668,7 @@ void IRAM_ATTR Field_Synch_Interrupt_Flag()
     */
 
   rom[ROM_FF03] |= 0b10000000;  //Set bit 7
-  //Serial.println(rom[ROM_FF03],HEX);
+
   if (sf.V_Synch_Int_Enabled)
   {
     sf.irq_pin = false;  //Interrupt enabled.
@@ -863,51 +680,6 @@ void IRAM_ATTR Field_Synch_Interrupt_Flag()
 
 
 /*
-lwasm helloasm.asm -fdecb -ohelloasm.bin
-&HA027 = basic execution after reset (poke 113,0: exec 40999)
-
-
-$0000 - $7FFF	RAM utilisateur (32K ou 64K)	RAM
-$8000 - $9FFF	Extended BASIC (extbas11.rom)	ROM
-$A000 - $BFFF	Color BASIC (bas13.rom)	ROM
-$C000 - $DFFF	Disk BASIC (disk.rom)	ROM
-$E000 - $FFFF	Kernel (interruptions, boot)	ROM
-
-&H112 et &H113 = timer
-IRQ 10d et 10e Jmp to &HD8AF
-
-COCO2:
-10C-10E = 7E D8AF
-FFF8-FFF9 = 010C
-
-Execution address of a program loaded from disk is at address $009d:$009e
-
-(This is from my own observations - may be wrong for long files - GeK )
-(No load address is given - I presume it uses the default at $0025:$0026)
-Offset:
-0x00		0xff	(?? flag for Basic)
-0x01 : 0x02	length in bytes of following data
-0x03 -		tokenised data - see file basicfmt.txt
-
-Machine Language files
-----------------------
-
-Header:
-0x00		0x00
-0x01 : 0x02	length in bytes of following data
-0x03 : 0x04	load address of data
-
-Tail:
-0x00		0xff
-0x01 : 0x02	0x0000	(?? why - data length ?)
-0x03 : 0x04	EXEC address
-
-Non-Segmented files consist of
-	[header] [data] [tail]
-
-Segmented m/l files consist of
-	[header] [data] [header] [data] .... [header] [data] [tail]
-
 
 ---------------------------------
 FF22:
@@ -986,7 +758,7 @@ uint32_t testloop1 = 0;
 
 void IRAM_ATTR onCPUTimer() 
 {
-  //portENTER_CRITICAL_ISR(&timerMux);
+  
   Debug1Toggle();
   cpu.execute(); 
   cpu.execute(); 
@@ -1033,7 +805,7 @@ uint8_t ReadJoysticks(uint8_t JoyNum)
   default:
     break;
   }
-  return 255; //CoCo is 6 bit MSB
+  return 255; 
 }
 
 
@@ -1065,133 +837,27 @@ void setup()
 
   Setup_USB();
   attachInterrupt(digitalPinToInterrupt(Field_Synch_Interrupt_PIN), Field_Synch_Interrupt_Flag, FALLING);
-  //attachInterrupt(digitalPinToInterrupt(Field_Synch_Interrupt_PIN), Field_Synch_Interrupt_Flag, CHANGE);
 
-  xTaskCreatePinnedToCore(
+
+  xTaskCreatePinnedToCore
+  (
     VideoCore,        // Fonction
-    "SystemCore",      // Nom
-    6048,              // Taille stack
-    NULL,              // Paramètre
-    2,                 // Priorité
-    NULL,              // Handle (facultatif)
-    1                  // CPU 0
+    "SystemCore",      // Name
+    6048,              // stack
+    NULL,              // Parameter
+    2,                 // Priority
+    NULL,              // Handle 
+    1                  // CPU 0 or 1
   );
-
-
-#ifdef ISR_CORE  
-  /*
-  xTaskCreatePinnedToCore(
-    KeyBoardCore,        // Fonction
-    "SystemCore",      // Nom
-    2000,              // Taille stack
-    NULL,              // Paramètre
-    2,                 // Priorité
-    NULL,              // Handle (facultatif)
-    0                  // CPU 0
-  );
-*/
-#else
-
-  xTaskCreatePinnedToCore(
-    CPU_Core,          // Fonction
-    "CPU_Core",        // Nom
-    2048,              // Taille stack
-    NULL,              // Paramètre
-    2,                 // Priorité
-    NULL,              // Handle (facultatif)
-    1                  // CPU 1
-  );
-
-#endif
-
-
-  
-
 
 }
 
 
-
-unsigned long currentMillis;
-unsigned long previousMillis = 0;   // pour mémoriser le dernier temps
-const long interval = 60;           // intervalle de 16.67 ms (16 ms pour simplifier)
-
-
-
-//the loop is done every frame
 void loop()
 {
   //Nothig to do here, all the work is in ISR and RTOS
-  
-
 }
 
-
-uint8_t ReadKeyboard(void)
-{
-  uint8_t InputVal;
-  if (Serial1.available() > 0)
-  {
-    InputVal = Serial1.read();
-    //Serial.println(InputVal);
-    return InputVal;
-  }  
-  else
-  {
-    return 0;
-  }
-
-}
-
-
-
-//6 bit mode for Coco 3    R R              G  G                B  B
-//     8 bit mode          R R R            G  G  G             G  G
-//                         7 6 5            7  6  5             7  6
-//                     r,r,r,r,r,  g, g, g, g, g, g,   b, b, b, b, b,  h,v
-//const PinConfig pins(0,0,4,5,6,  0,00,00,07, 8, 9,  00,00,00,12,13,  1,2);
-//                         B B G            G  G  R             R  R
-//                         0 1 0            1  2  0             1  2
-
-
-void DrawColorMap(void)
-{
-  uint32_t x, y, a, b;
-  int col;
-  y=0;
-
-  col = 0b11100000;
-  for (x=0; x!=320;x++)
-  {
-    vga->dot(x,y,col);
-    vga->dot(x,y+1,col);
-    vga->dot(x,y+2,col);
-    vga->dot(x,y+3,col);
-    vga->dot(x,y+4,col);
-  }
-  y+=5;
-
-  col = 0b00011100;
-  for (x=0; x!=320;x++)
-  {
-    vga->dot(x,y,col);
-    vga->dot(x,y+1,col);
-    vga->dot(x,y+2,col);
-    vga->dot(x,y+3,col);
-    vga->dot(x,y+4,col);
-  }
-  y+=5;
-  col = 0b00000011;
-  for (x=0; x!=320;x++)
-  {
-    vga->dot(x,y,col);
-    vga->dot(x,y+1,col);
-    vga->dot(x,y+2,col);
-    vga->dot(x,y+3,col);
-    vga->dot(x,y+4,col);
-  }
-  y+=5;
-}
 
 #define COCO2_GRAPHMODE_32X16_8X12 0b0 //Text 32x16
 #define COCO2_GRAPHMODE_256X192X2 0b11110110  //PMODE 4
@@ -1210,15 +876,6 @@ void IRAM_ATTR VideoCore(void *pvParameters)
   uint8_t ModeValue;
   while (true) 
   {
-    //Serial.print("A");
-    /*for (uint32_t XX=0; XX != 1000 ; XX++)
-    {
-      cpu.execute();
-
-    }*/
-
-    //vTaskDelay(1);
-    //Serial.println(sf.DIRECT_Key_Code);
     if (sf.DIRECT_Key_Code == MENU_F12) //Emulator menu entrance
     {
       Serial.println("In Emulator Menu");
@@ -1236,8 +893,6 @@ void IRAM_ATTR VideoCore(void *pvParameters)
 
 
     ModeValue = sf.Coco2GraphicMode & 0b11110111;    //Remove the Color bit
-    //Serial.println(tmpval8t,HEX);
-    //vTaskDelay(100);
     switch (ModeValue)
     {
     
@@ -1317,16 +972,6 @@ break;
   
     vga->show();
 
-
-
-/*
-    if (tmpKey == '/')
-    {
-      rom[0xff48 - ROM_OFFSET] &=0b11111110;
-      Serial.println("Slash");
-    }
-*/
-
     FillKeyboardMatrix();
   }
 }
@@ -1334,7 +979,6 @@ break;
 
 void Do_COCO2_GRAPHMODE_64X64X4(void)
 {
-  //Serial.println(sf.Coco2GraphicMode,HEX);  
 
 
   if (sf.Coco2VideoGenMODE != COCO2_GRAPHMODE_64X64X4)
@@ -1785,8 +1429,6 @@ void Do_COCO2_GRAPHMODE_128X96X2(void)
 
 void Do_COCO2_GRAPHMODE_128X96X4(void)
 {
-  //Serial.println(sf.Coco2GraphicMode,HEX);  
-
 
 
   if (sf.Coco2VideoGenMODE != COCO2_GRAPHMODE_128X96X4)
@@ -1977,8 +1619,6 @@ void Do_COCO2_GRAPHMODE_128X192X4(void)
 
   for (Yloop = 24; Yloop <216; Yloop++)
   {
-    //for (Xloop = (sf.VideoEmulatorXpixels-X_OFFSET_32)>>1; Xloop <sf.VideoEmulatorXpixels - ((sf.VideoEmulatorXpixels-X_OFFSET_32)>>1) ; Xloop+=8)
-    //for (Xloop = (sf.VideoEmulatorXpixels-256)>>1; Xloop <sf.VideoEmulatorXpixels - ((sf.VideoEmulatorXpixels-256)>>1) ; Xloop+=8)
     for (Xloop = 32; Xloop < 288 ; Xloop+=8)
     {
       Dot1bit[3] = (memory[MemLoop] >> 6) & 0b11;  // Bits 6-7
@@ -2015,9 +1655,6 @@ void Do_COCO2_GRAPHMODE_256X192X2(void)
     sf.Coco2VideoGenMODE = COCO2_GRAPHMODE_256X192X2;
   }
 
-
-
-  //vga->clear(0b11111111);
   uint32_t MemLoop = (sf.Coco2VideoPageOffset_Registers * COCO2_GRAPH_OFFSET_LEN);
   uint16_t Xloop, Yloop;
   uint8_t Dot1bit[16];
@@ -2035,7 +1672,7 @@ void Do_COCO2_GRAPHMODE_256X192X2(void)
   }  
 
   for (Yloop = 23; Yloop <216; Yloop++)
-  //for (Yloop = 24 ; Yloop <216; Yloop++)
+
   {
     for (Xloop = 32; Xloop <288 ; Xloop+=16)
     {
@@ -2113,7 +1750,7 @@ void IRAM_ATTR Do_COCO2_GRAPHMODE_256X192X2_ARTEFACT(void)
     Xcount = 0;
     DotCount = 0;
     LinePrepLoop = 0;
-    //for (Xloop = (sf.VideoEmulatorXpixels-X_OFFSET_32)>>1; Xloop <sf.VideoEmulatorXpixels - ((sf.VideoEmulatorXpixels-256)>>1) ; Xloop+=8)
+
     for (Xloop = 32; Xloop <288 ; Xloop+=8)
     {
       Dot1bit[0] = ((memory[MemLoop]>>7) & 0b00000001);
@@ -2441,7 +2078,7 @@ void Do_COCO2_GRAPHMODE_256X192X2_ARTEFACT_BACK(void) //(almost)
         {
             uint8_t byte = memory[MemLoop++];
             
-            // Décodage des 8 bits pour cette ligne
+            // 8 Bit decoding for this line
             for (int i = 0; i < 8; i += 2)
             {
                 // Group pixels in pairs for artefacts NTSC
@@ -2482,121 +2119,28 @@ void Do_COCO2_GRAPHMODE_32X16_8X12(void)
 
 
 
-//const double cycle_duration_us = 1.1235955;   //Real
-//const double cycle_duration_us = 0.65;    //PLUS LE CHIFFRE EST GROS, PLUS LE cpu EST LENT  //Cycle accurate slow speed
-const double cycle_duration_us = 0.1;    //PLUS LE CHIFFRE EST GROS, PLUS LE cpu EST LENT  //Cycle accurate slow speed
-
-uint16_t cpu_Cycles;
-#include "xtensa/core-macros.h"
-
-#define CPU_FREQ_MHZ 240.0f
-void CPU_Core(void *pvParameters) 
-{
-  //Coco single cycle @ 0.89 MHZ = 1.1236 uS
-
-  while (true) 
-  {
-  //  uint32_t t_start = xthal_get_ccount();
-
-    // Dans la boucle principale
-    int cycles = cpu.execute();
-    
-    //vTaskDelay(1);
-    /*
-    if ((rom[ROM_FF03] & 0b10000000) == 0)
-    {
-      Debug1Toggle;
-    }
-    */
-#ifndef ISR_CORE
-    if (IsButtonPressed())
-    {
-      uint16_t test1;
-      test1 = cpu.disassemble_instruction(text_buffer, 64, cpu.get_pc());
-			printf("%s\n", text_buffer);
-
-
-      delay(50);
-    }
-#endif
-    /*    
-    float wait_us = cycles * sf.CPU_Speed;
-    
-    if (wait_us >= 10.0f) {
-        delayMicroseconds((uint32_t)wait_us);
-    } else {
-        uint32_t wait_cycles = (uint32_t)(wait_us * CPU_FREQ_MHZ);
-        uint32_t spin_start = xthal_get_ccount();
-        while ((xthal_get_ccount() - spin_start) < wait_cycles) {
-            // spin wait ultra-fast
-        }
-    }
-
-
-*/
-    //Serial.println("CPU");
-    // Tâche CPU 1
-    //digitalWrite(DebugPin, HIGH);
-    //cpu_Cycles = cpu.execute();
-    //digitalWrite(DebugPin, LOW);
-    //vTaskDelay(pdMS_TO_TICKS(100)); // Pour éviter un spam trop rapide
-    //vTaskDelay(3);
- 
-    }
-}
-
-void KeyBoardCore(void *pvParameters) 
-{
-
-  attachInterrupt(digitalPinToInterrupt(Field_Synch_Interrupt_PIN), Field_Synch_Interrupt_Flag, FALLING);
-  cpuTimer = timerBegin(2, 40, true);  // 80 MHz / 80 = 1 MHz = 1 µs par tick
-  timerAttachInterrupt(cpuTimer, &onCPUTimer, true);
-  timerAlarmWrite(cpuTimer, 11, true);    //10 minimum
-  timerAlarmEnable(cpuTimer);
-  
-  vTaskDelete(NULL);  // Arrête cette tâche
-  while (true) 
-  {
-    //Serial.println("CPU");
-    // Tâche CPU 1
-    // Scan Clavier
-    //rom[0x1f03] = tmpval1;
-
-
-    vTaskDelay(5);
-    //vTaskDelay(pdMS_TO_TICKS(100)); // Pour éviter un spam trop rapide
-    //vTaskDelay(3);
-  }
-}
-
-
-
-
-
-
-
 
 void CopyCoCo2ROMS(void)
 {
   uint32_t LoopRomSource, LoopRam1;
 
-  // Copier extbas11 à 0x8000 (8K)
+  // Copy extbas11 to 0x8000 (8K)
   LoopRam1 = 0x8000;
   for (LoopRomSource = 0; LoopRomSource < 8192; LoopRomSource++)
     memory[LoopRam1++] = extbas11[LoopRomSource];
 
-  // Copier bas12 à 0xA000 (8K)
+  // Copy bas12 to 0xA000 (8K)
   LoopRam1 = 0xA000;
   for (LoopRomSource = 0; LoopRomSource < 8192; LoopRomSource++)
   memory[LoopRam1++] = bas13[LoopRomSource];
-  //memory[LoopRam1++] = bas12[LoopRomSource];
 
-  // Copier disk11 à 0xC000 (8K)
+
+  // Copy disk11 to 0xC000 (8K)
   LoopRam1 = 0xC000;
   for (LoopRomSource = 0; LoopRomSource < 8192; LoopRomSource++)
     memory[LoopRam1++] = disk11[LoopRomSource];
 
-  // Copier de memory[0x8000 - 0xFFFF] dans rom[0 - 0x7FFF]
+  // copy memory[0x8000 - 0xFFFF] to rom[0 - 0x7FFF]
   LoopRomSource = 0;
   for (LoopRam1 = 0x8000; LoopRam1 < 0x10000; LoopRam1++)
   {
@@ -2633,7 +2177,7 @@ void CopyCoCo3ROMS(void)
   }
 
  
-    // Copier de memory[0x8000 - 0xFFFF] dans rom[0 - 0x7FFF]
+    // Copy de memory[0x8000 - 0xFFFF] to rom[0 - 0x7FFF]
     LoopRomSource = 0;
     for (LoopRam1 = 0x8000; LoopRam1 < 0x10000; LoopRam1++)
     {
@@ -2642,87 +2186,8 @@ void CopyCoCo3ROMS(void)
 
     
  
-   // Reset vectors
-   //ResetVectors;
-   /*
-   uint32_t VectorsLoop = 0;
-   LoopRomSource = 0xfff0 - 0x8000;
-   for (VectorsLoop = 0; VectorsLoop !=16 ; VectorsLoop++)
-   {
-     memory[LoopRomSource + 0x8000] = ResetVectors[VectorsLoop];
-     rom[LoopRomSource++] = ResetVectors[VectorsLoop];
-   }
-*/
-   
- 
   return;
 }
-//tutstomb
-//timebandit
-
-/*
-
-	static int x = 0;
-	vga->clear(vga->rgb(0x80, 0x80, 0x80));
-	//using adafruit gfx
-	gfx->setTextColor(0);
-  gfx->setFont(&FreeMonoBoldOblique24pt7b);
-	gfx->setCursor(100 + x, 100);
-	gfx->print("Hello");
-	gfx->setFont(&FreeSerif24pt7b);
-	gfx->setCursor(100, 200);
-	gfx->print("World!");
-	
-  vga->show();
-	x = (x + 1) & 255;
-  
-  */
-
-  void VDG_Generate_MAP(void)
-  {
-    vga->clear(vga->rgb(0x00, 0x80, 0x00));
-    //gfx->fillRect(63,21,200,200,0x07e0);
-    //using adafruit gfx
-    gfx->setTextColor(0);
-/*
-    gfx->setCursor(10,10);
-    gfx->setTextColor(VDG_WHITE);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_RED);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_GREEN);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_BLUE);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_PURPLE);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_YELLOW);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_MAGENTA);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_GREEN);
-    gfx->println("TEST");
-    gfx->setTextColor(VDG_ORANGE);
-    gfx->println("TEST");
-*/
-    
-  gfx->setTextColor(VDG_RED);
-  gfx->setCursor(10,10);
-
-  gfx->print("TES");
-  gfx->setTextColor(VDG_RED,VDG_YELLOW);
-  gfx->print(" ");
-  gfx->setTextColor(VDG_RED);
-  gfx->print("T");
-
-
-    vga->show();
-  
-    while(1)
-    {
-      delay(10);
-    }
-  }
 
 
   #define M_FF22 0xff22
@@ -2799,9 +2264,6 @@ void ManagePeripherals_Read(uint16_t address)
   switch (address)
   {
     case M_FF02: //ROM_FF02:
-
-      //rom[ROM_FF03] &= 0b01111111;  //Set interrupt flag (Disable); 
-      //Serial.println("I");
       rom[ROM_FF03] &= 0b01111111;  //If ff02 Address is read, it reset the Vsynch interrupt flag AT ff03.
       if (sf.V_Synch_Int_Enabled)
       {
@@ -2817,9 +2279,7 @@ void ManagePeripherals_Read(uint16_t address)
 
     uint8_t val1, buttons, tmp1;
     uint8_t MultiplexerCB2_CA2;
-  
-    //if (rom[ROM_FF00] ==0x7f)   //So No Keyboard Scan
-    if (true)   //So No Keyboard Scan
+    if (true)  
     {
       ManageKeyboardScan(rom[ROM_FF02]);
       //Do the joystick stuff first
@@ -2833,7 +2293,7 @@ void ManagePeripherals_Read(uint16_t address)
       }
       else
       {
-        //Serial.print("KB");
+
         if (!sf.is_LastKeyboardScanned)
         {
           rom[ROM_FF00] |=0b00000001;
@@ -2854,18 +2314,16 @@ void ManagePeripherals_Read(uint16_t address)
     
       MultiplexerCB2_CA2 = (((rom[ROM_FF03] & 0b00001000)>>2) | ((rom[ROM_FF01] & 0b00001000)>>3));   //Get the two bits Comparator Selection
       val1 = ReadJoysticks(MultiplexerCB2_CA2);   //Sample Requested joystick
-      //Serial.println(val1);
-      //val1 = rom[ROM_FF00];
       
       if (val1 > (rom[ROM_FF20] & 0b11111100))
       {
         rom[ROM_FF00] |= 0b10000000;
-        //Serial.println("A");
+
       }
       else
       {
         rom[ROM_FF00] &= 0b01111111;
-        //Serial.println("B");
+
       }
 
     }
@@ -2906,9 +2364,6 @@ void ManagePeripherals_Read(uint16_t address)
           //file.close(); //Close the actual
         }
 
-        //if(file) file.close();
-        //file = SD_MMC.open((const char*)Disk_Drive.Name_Disk[DiskAccess.DriveSelected], FILE_WRITE);
-        //file = SD_MMC.open("/GAMES01.DSK",FILE_READ);
 
         Disk_Drive.isFileAlreadyOpen = true;
       }
@@ -3034,12 +2489,7 @@ void InitDisks(void)
   Disk_Drive.Name_Disk[1][255] = 0; //Just to be sure.
   Disk_Drive.Name_Disk[2][255] = 0; //Just to be sure.
   Disk_Drive.Name_Disk[3][255] = 0; //Just to be sure.
-  /*
-  strcpy((char*)Disk_Drive.Name_Disk[0], "/GAMES13.DSK");  
-  strcpy((char*)Disk_Drive.Name_Disk[1], "/GAMES19.DSK");  
-  strcpy((char*)Disk_Drive.Name_Disk[2], "/GAMES12.DSK");  
-  strcpy((char*)Disk_Drive.Name_Disk[3], "/MYDISK.DSK");  
-  */
+
   Disk_Drive.LastNumber_Accessed = 255; //No Last Accessed
   Disk_Drive.isFileAlreadyOpen = false;
 
@@ -3066,12 +2516,6 @@ void InitDisks(void)
 
     Serial.print(" PC: ");
     Serial.println(cpu.get_pc(),HEX);
-    //Serial.print(" FF48: ");
-    //Serial.print(rom[ROM_FF48]);
-    //Serial.print(" Count: ");
-    //Serial.print(DiskAccess.RW_Process_ByteRemainingCounter);
-    //Serial.print(" FF4B: ");
-    //Serial.println(rom[ROM_FF4B],HEX);
 
 
     delay(40);
@@ -3091,16 +2535,14 @@ void InitDisks(void)
       if (DiskAccess.NMI_Delay==2)
       {
         sf.nmi_pin = false;  //NMI Started
-//        Serial.println("NMI Started");
+
         rom[ROM_FF48] = 0;
       }
 
       if (DiskAccess.NMI_Delay == 1)
       {
         sf.nmi_pin = true;  //NMI Stopped
-//        Serial.println("NMI Stopped");
       }
-//      Serial.println("NMI Loop");
 
     }
 
@@ -3247,9 +2689,6 @@ void InitDisks(void)
           {
             //file.close(); //Close the actual
           }
-          //file = SD_MMC.open((const char*)Disk_Drive.Name_Disk[DiskAccess.DriveSelected],FILE_WRITE);
-          //file = SD_MMC.open((const char*)"/GAMES01.DSK",FILE_WRITE);
-          
           Disk_Drive.isFileAlreadyOpen = true;
         }
 
@@ -3269,12 +2708,12 @@ void InitDisks(void)
         
         sf.PHYSICAL_Drive_Must_Be_Saved = true; //Flag to request a File save (can't do it in Fotwrare Interrupt)
         rom[ROM_FF48] = M_DRQ_BIT_READY;
-        //Serial.println("Write Closed");
+
         DiskAccess.IsInWriteProcess = false;
         DiskAccess.NMI_Delay = 4;
         sf.nmi_pin = false;  //NMI Started
         Disk_Drive.isFileAlreadyOpen = false;
-        //file.close(); //Close the actual
+
         Disk_Drive.LastNumber_Accessed = 254;
         
       }
@@ -3282,7 +2721,7 @@ void InitDisks(void)
     else
     {
       Disk_Drive.isFileAlreadyOpen = false; //ADDED
-      //file.close(); //Close the actual  ADDED
+
       Disk_Drive.LastNumber_Accessed = 254; //ADDED
       
       
@@ -3298,7 +2737,7 @@ void InitDisks(void)
       rom[ROM_FF22] = value;
       //sf.Coco2GraphicMode &= (0b00000111);  //Keep the V2 V1 V0
       //sf.Coco2GraphicMode |= (value & 0b11111000); //Read the VDG values only.
-      // Conserve les 3 bits bas (V0, V1, V2) et remplace les bits de poids fort
+      
       sf.Coco2GraphicMode = (sf.Coco2GraphicMode & 0b00000111) | (value & 0b11111000);      
       
       break;
@@ -3378,16 +2817,6 @@ void InitDisks(void)
 
 
 
-    /*
-    //Normally, these location must equal 0 at all time so technically, no need to emule these.
-    case M_FFD4:
-      sf.Coco2VideoPageOffset_Registers &=0b01111111; //Clear the bit
-    break;
-    case M_FFD5:
-    sf.Coco2VideoPageOffset_Registers |=0b10000000; //Set the bit
-    break;
-*/
-
       default:
       break;
     }
@@ -3404,7 +2833,7 @@ void FillKeyboardMatrix(void)
     }
   }
   sf.AnyKeypress = false; 
-  //SCAN_Keyboard_Matrix[7][5] = 0b01011111;
+  
   for (uint8_t loop1 = 0; loop1 !=8; loop1++)
   {
     if (USB_DEV_CONTROL.USB_CoCo_Key_Array[loop1] & 0b01000000)
@@ -3430,9 +2859,6 @@ void FillKeyboardMatrix(void)
     if (USB_DEV_CONTROL.USB_CoCo_Key_Array[loop1] != 0)
     {
       sf.AnyKeypress = true; 
-      //Serial.print(SCAN_Keyboard_Matrix[loop1][5],HEX);
-      //Serial.print(" ");
-      
     }
   }
 
@@ -3440,308 +2866,17 @@ void FillKeyboardMatrix(void)
 }
   
   
-
-  void FillKeyboardMatrixWithKeyPressed(uint8_t ASC_Char)
-  {
-    sf.AnyKeypress = true;
-    switch (ASC_Char)
-    {
-      //First Scan is direct key without shift
-      //PB7-----------------
-      case '/':
-        SCAN_Keyboard_Matrix[7][5] = 0b01011111;
-      break;
-      case '7':
-        SCAN_Keyboard_Matrix[7][4] = 0b01101111;
-      break;
-      case ' ':
-        SCAN_Keyboard_Matrix[7][3] = 0b01110111;
-      break;
-      case 'W':
-        SCAN_Keyboard_Matrix[7][2] = 0b01111011;
-      break;
-      case 'O':
-       SCAN_Keyboard_Matrix[7][1] = 0b01111101;
-      break;
-      case 'G':
-        SCAN_Keyboard_Matrix[7][0] = 0b01111110;
-      break;
-
-      //PB6-----------------
-      case '.':
-        SCAN_Keyboard_Matrix[6][5] = 0b01011111;
-      break;
-      case '6':
-        SCAN_Keyboard_Matrix[6][4] = 0b01101111;
-      break;
-      case 253:  //Right Arrow (To map later)
-        SCAN_Keyboard_Matrix[6][3] = 0b01110111;
-      break;
-      case 'V':
-        SCAN_Keyboard_Matrix[6][2] = 0b01111011;
-      break;
-      case 'N':
-        SCAN_Keyboard_Matrix[6][1] = 0b01111101;
-      break;
-      case 'F':
-        SCAN_Keyboard_Matrix[6][0] = 0b01111110;
-      break;
-
-      //PB5-----------------
-      case '-':
-        SCAN_Keyboard_Matrix[5][5] = 0b01011111;
-      break;
-      case '5':
-        SCAN_Keyboard_Matrix[5][4] = 0b01101111;
-      break;
-      case 8:  //Left Arrow (Back space on CoCo))
-        SCAN_Keyboard_Matrix[5][3] = 0b01110111;
-      break;
-      case 'U':
-        SCAN_Keyboard_Matrix[5][2] = 0b01111011;
-      break;
-      case 'M':
-        SCAN_Keyboard_Matrix[5][1] = 0b01111101;
-      break;
-      case 'E':
-        SCAN_Keyboard_Matrix[5][0] = 0b01111110;
-      break;
-      
-      //PB4-----------------
-      case ',':
-        SCAN_Keyboard_Matrix[4][5] = 0b01011111;
-      break;
-      case '4':
-        SCAN_Keyboard_Matrix[4][4] = 0b01101111;
-      break;
-      case 251:  //Down Arrow (To map later)
-        SCAN_Keyboard_Matrix[4][3] = 0b01110111;
-      break;
-      case 'T':
-        SCAN_Keyboard_Matrix[4][2] = 0b01111011;
-      break;
-      case 'L':
-        SCAN_Keyboard_Matrix[4][1] = 0b01111101;
-      break;
-      case 'D':
-        SCAN_Keyboard_Matrix[4][0] = 0b01111110;
-      break;
-
-      //PB3-----------------
-      case ';':
-        SCAN_Keyboard_Matrix[3][5] = 0b01011111;
-      break;
-      case '3':
-        SCAN_Keyboard_Matrix[3][4] = 0b01101111;
-      break;
-      case 250:  //Up Arrow (To map later)
-        SCAN_Keyboard_Matrix[3][3] = 0b01110111;
-      break;
-      case 'S':
-        SCAN_Keyboard_Matrix[3][2] = 0b01111011;
-      break;
-      case 'K':
-        SCAN_Keyboard_Matrix[3][1] = 0b01111101;
-      break;
-      case 'C':
-        SCAN_Keyboard_Matrix[3][0] = 0b01111110;
-      break;
-
-      //PB2-----------------
-      case ':':
-        SCAN_Keyboard_Matrix[2][5] = 0b01011111;
-      break;
-      case '2':
-        SCAN_Keyboard_Matrix[2][4] = 0b01101111;
-      break;
-      case 'Z': 
-        SCAN_Keyboard_Matrix[2][3] = 0b01110111;
-      break;
-      case 'R':
-        SCAN_Keyboard_Matrix[2][2] = 0b01111011;
-      break;
-      case 'J':
-        SCAN_Keyboard_Matrix[2][1] = 0b01111101;
-      break;
-      case 'B':
-        SCAN_Keyboard_Matrix[2][0] = 0b01111110;
-      break;
-
-      //PB1-----------------
-      case '9':
-        SCAN_Keyboard_Matrix[1][5] = 0b01011111;
-      break;
-      case '1':
-        SCAN_Keyboard_Matrix[1][4] = 0b01101111;
-      break;
-      case 'Y': 
-        SCAN_Keyboard_Matrix[1][3] = 0b01110111;
-      break;
-      case 'Q':
-        SCAN_Keyboard_Matrix[1][2] = 0b01111011;
-      break;
-      case 'I':
-        SCAN_Keyboard_Matrix[1][1] = 0b01111101;
-      break;
-      case 'A':
-        SCAN_Keyboard_Matrix[1][0] = 0b01111110;
-      break;
-
-      //PB0-----------------
-      case '8':
-        SCAN_Keyboard_Matrix[0][5] = 0b01011111;
-      break;
-      case '0':
-        SCAN_Keyboard_Matrix[0][4] = 0b01101111;
-      break;
-      case 'X': 
-        SCAN_Keyboard_Matrix[0][3] = 0b01110111;
-      break;
-      case 'P':
-        SCAN_Keyboard_Matrix[0][2] = 0b01111011;
-      break;
-      case 'H':
-        SCAN_Keyboard_Matrix[0][1] = 0b01111101;
-      break;
-      case '@':
-        SCAN_Keyboard_Matrix[0][0] = 0b01111110;
-      break;
-
-//-------------------Now, Scan with Shift Key-----------------
-
-      //PB7-----------------
-      case '?':
-        SCAN_Keyboard_Matrix[7][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case 39:  //Apostrophe
-        SCAN_Keyboard_Matrix[7][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-
-      //PB6-----------------
-      case '>':
-        SCAN_Keyboard_Matrix[6][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case '&':
-        SCAN_Keyboard_Matrix[6][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-
-      //PB5-----------------
-      case '=':
-        SCAN_Keyboard_Matrix[5][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case '%':
-        SCAN_Keyboard_Matrix[5][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-
-      //PB4-----------------
-      case '<':
-        SCAN_Keyboard_Matrix[4][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case '$':
-        SCAN_Keyboard_Matrix[4][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-
-      //PB3-----------------
-      case '+':
-        SCAN_Keyboard_Matrix[3][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case '#':
-        SCAN_Keyboard_Matrix[3][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-
-            //PB2-----------------
-      case '*':
-        SCAN_Keyboard_Matrix[2][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case 34:  //Double Quotes
-        SCAN_Keyboard_Matrix[2][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-
-            //PB1-----------------
-      case ')':
-        SCAN_Keyboard_Matrix[1][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      case '!':
-        SCAN_Keyboard_Matrix[1][4] = 0b01101111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-    break;
-
-            //PB0-----------------
-      case '(':
-        SCAN_Keyboard_Matrix[0][5] = 0b01011111;
-        SCAN_Keyboard_Matrix[7][6] = 0b00111111;
-      break;
-      //Special case ENTER KEY alone
-      case 224:  //Enter Key
-      case 192:  //Enter Key
-      case 13:  //Enter Key
-      SCAN_Keyboard_Matrix[0][6] = 0b00111111;
-    break;
-
-
-      //Special case BREAK KEY alone
-      case 27:  //BREAK Key
-        SCAN_Keyboard_Matrix[2][6] = 0b00111111;
-    break;
-
-
-
-      case 254:
-        for (int loop1 = 0; loop1 != 8; loop1++)
-        {
-          for (int loop2 = 0; loop2 != 7; loop2++)
-          {
-            SCAN_Keyboard_Matrix[loop1][loop2] = 0;
-          }
-        }
-        sf.AnyKeypress = false;
-
-      default:
-      break;
-    }
-  }
-
-  
-  /*
-    This routine simulate the keypress of the keyboardscan matrix
-  */
   void ManageKeyboardScan(uint8_t value)
   {
     uint8_t loop1, loop2, Val1;
     bool ValDone = false;
-    //Serial.println(rom[ROM_FF00]);
+
     Val1 = value ^ 0b11111111;
     rom[ROM_FF00] |= 0b01111111;   //Reset to nothing to scan.
     
-    //Serial.println(ReadCoCoButtons(),HEX);
     if (ReadCoCoButtons()==3 && !sf.is_JOY1_B1_WasPressed) //All buttons released and was not pressed
-    //if (true) //All buttons released and was not pressed
     {
-      /*
-      if (sf.AnyKeypress & value == 0)
-      {
-
-        rom[ROM_FF00] &= 0b00111111;
-        return;
-      }*/
       sf.is_LastKeyboardScanned = true;
-      //Serial.print("J");
-      //Serial.print(value,HEX);
-      //Serial.print(" ");
-
       
       if ((Val1 & 0b10000000) != 0 && ValDone == false) //case 0b01111111
       {
@@ -3840,18 +2975,6 @@ void FillKeyboardMatrix(void)
         }
       }
 
-  /*
-      if (IsButtonPressed() && value == 0b01111111)
-      {
-        rom[0x1f00] = 0b11011111;
-        memory[0x400] = 66;
-
-      }
-      else
-      {
-        rom[0x1f00] = 0b01111111;
-      }
-  */
       
     }
     else
@@ -3864,253 +2987,7 @@ void FillKeyboardMatrix(void)
 
 
   //--------------------------------VDG MAP----------------------------------------------------------
-  //uint8_t VDG_MAP[256][8][12];
-  //fonts_VDG
-  //0x00, 0x38, 0x44, 0x04, 0x34, 0x4c, 0x4c, 0x38, 0x00, 0x00, 0x00, 0x00, //@
   
-  
-/*
-
-  uint8_t cc2_VDG_MAP[256*8*12];
-  #define COL8_BLACK 0
-  #define COL8_GREEN 0b00011100
-  #define COL8_YELLOW 0b11111100
-  #define COL8_BLUE 0b00000011
-  #define COL8_RED 0b11100000
-  #define COL8_WHITE 0b11111111
-  #define COL8_GREEN_L 0b00010000
-  #define COL8_PURPLE 0b10100011
-  #define COL8_PEACH 0b11110001
-  void BuildMapFromArray(void)
-  {
-    uint8_t ColorFore,ColorBack;
-    
-    uint32_t ArrayLoop = 0;
-    uint16_t loop1, loop2, loop3;
-    uint16_t bitLoop;
-    uint8_t charT, val1;
-    loop3=0;
-    ColorFore = COL8_BLACK;
-    ColorBack = COL8_GREEN;
-
-    for (loop1 = 0; loop1!=12*32*2; loop1++)
-    {
-      charT = fonts_VDG[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-          cc2_VDG_MAP[loop3+12*8*32*2] = ColorBack;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-          cc2_VDG_MAP[loop3+12*8*32*2] = ColorFore;
-        }
-        loop3++;
-      }
-    }
-
-
-    //Colorboxes
-    loop3 = 12*8*32*4;
-    
-//Col COL8_BLACK    
-    ColorBack = COL8_GREEN;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-
-        }
-        loop3++;
-      }
-    }
-
-
-//Col COL8_Yellow   
-    ColorBack = COL8_YELLOW;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-
-        }
-        loop3++;
-      }
-    }
-
-//Col COL8_BLUE
-    ColorBack = COL8_BLUE;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-        }
-        loop3++;
-      }
-    }
-  
-
-
-//Col COL8_RED
-    ColorBack = COL8_RED;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-        }
-        loop3++;
-      }
-    }
-
-//Col COL8_WHITE
-    ColorBack = COL8_WHITE;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-        }
-        loop3++;
-      }
-    }
-
-//Col COL8_GREEN_L
-    ColorBack = COL8_GREEN_L;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-        }
-        loop3++;
-      }
-    }
-
-//Col COL8_PURPLE
-    ColorBack = COL8_PURPLE;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-        }
-        loop3++;
-      }
-    }
-
-//Col COL8_Peach
-    ColorBack = COL8_PEACH;
-    ColorFore = COL8_BLACK;
-
-    ArrayLoop = 0;
-    for (loop1 = 0; loop1!=12*16; loop1++)
-    {
-      charT = fonts_VDG_Pattern[ArrayLoop++];
-      for (loop2 = 0; loop2 !=8; loop2++)
-      {
-        val1 = ((charT<<loop2) & 0b10000000);
-        if (val1 == 0)      
-        {
-          cc2_VDG_MAP[loop3] = ColorFore;
-        }
-        else
-        {
-          cc2_VDG_MAP[loop3] = ColorBack;
-        }
-        loop3++;
-      }
-    }
-
-
-  }
-*/
 
 
   void DisplayVDGchar(uint8_t charNum, uint16_t Xpos, uint16_t Ypos)
@@ -4120,69 +2997,8 @@ void FillKeyboardMatrix(void)
     loop1 = charNum * 8 * 12;
     for (YposLoop = Ypos; YposLoop != Ypos+12; YposLoop++)
     {
-      //for (XposLoop = Xpos; XposLoop != Xpos+8; XposLoop++)
-      //{
-      //  vga->dot(XposLoop, YposLoop,cc2_VDG_MAP[loop1++]);
-      //}
       vga->drawLineFromMemory8(Xpos, YposLoop,&cc2_VDG_MAP[loop1]);
       loop1+=8;
-    }
-  }
-/*
-  void DisplayVDGchar(uint8_t charNum, uint16_t Xpos, uint16_t Ypos)
-  {
-    uint32_t loop1, loop2;
-    uint16_t XposLoop, YposLoop;
-    loop1 = charNum * 8 * 12;
-    for (YposLoop = Ypos; YposLoop != Ypos+12; YposLoop++)
-    {
-      for (XposLoop = Xpos; XposLoop != Xpos+8; XposLoop++)
-      {
-        vga->dot(XposLoop, YposLoop,cc2_VDG_MAP[loop1++]);
-      }
-    }
-  }
-*/
-
-
-
-  void DumpMap(void)
-  {
-    uint32_t loop1, loop2, loop3;
-    loop2 = 0;
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-    Serial.println("START");
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-
-    for (loop1 = 0; loop1 != 256*8*12; loop1++)
-    {
-      Serial.print("0x");
-      Serial.print((uint8_t)cc2_VDG_MAP[loop1],HEX);
-      loop2++;
-      if (loop2<20)
-      {
-        Serial.print(", ");
-      }
-      else
-      {
-        Serial.println(", ");
-        loop2 = 0;
-      }
-      delay(2);
-    }
-    Serial.println("");
-    Serial.println("");
-    Serial.println("END");
-    Serial.println("");
-    Serial.println("");
-    while(1)
-    {
-      delay(1);
     }
   }
 
@@ -4218,7 +3034,7 @@ void line(int x0, int y0, int x1, int y1, int rgb)
 }
 
 
-  //---------------------------------------USB STACK-----------------------TO MOVE IN SEPARATE FILE--------------------------
+  //---------------------------------------USB STACK FOR COCO KEYBOARD MAPPING AND JOYSTICKS-----------------------
 
 
 
@@ -4772,5 +3588,5 @@ void UpdateJoyMap(uint8_t * Data, uint8_t usbNum)
     }
 }
 
-
+//-----------------End USB COCO MAP--------------------------------------------
 

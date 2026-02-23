@@ -210,3 +210,43 @@ NEW
 590 NEXTZ
 5300 GOTO 100
 
+
+
+
+
+# ESP32_CoCo2_Emulator
+This is a CoCo 2 Emulator running on an ESP32-S3-WROOM-1
+
+Ceci est une premiere release beta et meme si pas mal de choses fonctionnent, il y a surement plein de bug a découvrir eet déja connus.  Mais au moins, ca permet a la communauté de l'utiliser et de découvrir des solution tous ensemble.
+
+voici le schema de base pour faire fonctionner l'émulateur.  Vous aurez besoins d'un Board de développement avec un chip ESP32-S3-WROOM-1.
+
+
+Je travail présentement sur un PCB officiel pour le hardware ainsi qu'un boitier a imprimer 3D qui représentera le style du CoCo meme s'il n'a pas de clavier intégré.
+
+
+-F12 pour entrer dans le menu de l'emulateur
+
+Voici la liste de ce qui fonctionne:
+
+-Lecture Enregistrement Disquette
+-Son
+-Clavier USB
+-Joystick USB
+-La pluspart des modes videos (Il y a quelques modes obscures a identifier et a implémenter)
+-La génération Video couleur Artéfacte NTSC
+-La vitesse d'émulation du CPU semble correcte, parfois trop rapide, surtout dans le son (Probablement un interrupt non-géré convenablement)
+-V-SYNCH interrupt fonctionne.
+-32K UPPAR RAM est implémenté et fonctionnel
+
+Voici la liste de ce qui reste a faire:
+
+-Gérer les 2 Data Direction régisters (Est-ce vraiement nécessaire ou aucun logiciel ne modifie jamais la directions des registre FF00 et FF02?? A voir)
+-Hsynch interrupt.  (Est-ce qu'un logiciel CoCo se sert vraiement de ca?  Si quelqu'un le sait, faite le moi savoir, je m'en servirai pour l'implémenter/ le débugger).
+
+
+Voici la liste de bug connus a régler:
+
+-Lorsque l'on fait une copie d'un fichier vers un autre, le systeme plante.  Exemple:  COPY"TEST.BAS:0" TO "TEST.BAS:1"
+-Scintillement ou FLASH d'inage non alligné dans certains jeux.  Surement du a une mauvaise Synchro de VSYNCH ou le fait que le buffer de gestion video est independant de celui du CoCo...  
+-Probleme de vitesse de lecture du son.  Peut etre du au Cycle non-accurate de l'emulation CPU ou Interrupt pas géré totalement?

@@ -21,7 +21,7 @@
 #define __MAIN_H
 
 
-#include "sd_read_write.h"
+
 #include "SD_MMC.h"
 #include "EmuMenu.h"
 #include "ROMS_Source.h"
@@ -100,15 +100,8 @@ struct DriveStruct
 
 //---------------------------------------------------------------
 
-//----Debug stuff
-
-//#define DISK_DEBUG 	//Debug Disk Interface
-#define ISR_CORE		//Define if CPU is from ISR routine or Task Routine
-
 //#define PSRAM_EMU  //Load Rom and RAM of emulation in PSRAM instead of RAM
 
-void DiskDebugRead(uint16_t address);
-void DiskDebugWrite(uint16_t address, uint8_t value);
 
 void DoCPU(void);
 
@@ -221,8 +214,6 @@ bool IsButtonPressed(void);
 void ManagePeripherals_Write(uint16_t address, uint8_t value);
 void ManagePeripherals_Read(uint16_t address);
 void ManageKeyboardScan(uint8_t value);
-uint8_t ReadKeyboard(void);
-void FillKeyboardMatrixWithKeyPressed(uint8_t ASC_Char);
 void FillKeyboardMatrix(void);
 void CopyCoCo2ROMS(void);
 void CopyCoCo3ROMS(void);
@@ -231,11 +222,8 @@ void SetVideoMode(uint8_t VideoMode);
 void VideoCore(void *pvParameters);
 void line(int x0, int y0, int x1, int y1, int rgb);
 
-void CPU_Core(void *pvParameters);
-void KeyBoardCore(void *pvParameters);
 void InitPeripherals_and_Others(void);
 
-void DumpMap(void);
 //---------------Videos modes----------
 
 void Do_COCO2_GRAPHMODE_32X16_8X12(void);
@@ -249,11 +237,6 @@ void Do_COCO2_GRAPHMODE_128X64X4(void);
 void Do_COCO2_GRAPHMODE_128X64X2(void);
 void Do_COCO2_GRAPHMODE_64X64X4(void);
 
-
-
-// bas13 extbas11 disk11 coco3p coco3 bas12
-
-//uint8_t VDG_MAP[256][8][12];
 
 
 #define DEBUG1 13
