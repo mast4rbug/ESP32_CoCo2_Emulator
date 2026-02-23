@@ -1,6 +1,6 @@
 # ESP32 CoCo 2 Emulator
 
-![Version](https://img.shields.io/badge/version-2.0.0--beta.3-blue)
+![Version](https://img.shields.io/badge/version-0.0.0--beta.3-blue)
 ![Platform](https://img.shields.io/badge/platform-ESP32-green)
 ![License](https://img.shields.io/badge/license-Personal--Use-red)
 
