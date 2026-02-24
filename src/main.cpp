@@ -51,16 +51,15 @@
 USB_DEVICES_CTRL USB_DEV_CONTROL;
 
 
-  
+
   #define DP_P0  18  // always enabled
   #define DM_P0  17  // always enabled
-  #define DP_P1  16
-  #define DM_P1  15
-  #define DP_P2  12
-  #define DM_P2  11
+  #define DP_P1  12
+  #define DM_P1  11
+  #define DP_P2  16
+  #define DM_P2  15
   #define DP_P3  -1
   #define DM_P3  -1
-
 
 extern USB_DEVICES_CTRL USB_DEV_CONTROL;
 
