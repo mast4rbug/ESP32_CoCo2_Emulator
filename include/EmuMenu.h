@@ -41,10 +41,13 @@ void ClearFileList(void);
 void ClearFileBuffer(void);
 uint8_t DrawFiles(uint16_t FileNumber, uint8_t ForeColor, uint8_t BackColor);
 void DisplayDiskContent(void);
-int8_t FillFileBuffer(uint16_t startIndex, int8_t MaxIndex);
+int8_t FillFileBuffer(uint16_t startIndex, int8_t MaxIndex, const char* fileExt);
 void DrawFrames(void);
-void DrawMenuChoose(void);
+void DrawMenuDiskChoose(void);
 void DrawDiskMenuChoose_1(void);
+void DrawMainMenuOptions(void);
+void DrawFirmwareUpdateMenuChoose(void);
+char* Firmware_Choose(void);
 
 
 #endif

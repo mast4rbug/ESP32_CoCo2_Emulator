@@ -775,7 +775,7 @@ IRAM_ATTR void mc6809::lbeq(uint16_t ea)
 {
 	if (is_z_flag_set()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -784,7 +784,7 @@ IRAM_ATTR void mc6809::lbge(uint16_t ea)
 	// both n and v set  OR  both n and v clear
 	if ((is_n_flag_set() && is_v_flag_set()) || (is_n_flag_clear() && is_v_flag_clear())) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -793,7 +793,7 @@ IRAM_ATTR void mc6809::lbgt(uint16_t ea)
 	// (both n and v set  OR  both n and v clear)  AND  (z clear)
 	if (((is_n_flag_set() && is_v_flag_set()) || (is_n_flag_clear() && is_v_flag_clear())) && is_z_flag_clear()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -801,7 +801,7 @@ IRAM_ATTR void mc6809::lbhi(uint16_t ea)
 {
 	if (is_z_flag_clear() && is_c_flag_clear()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -816,7 +816,7 @@ IRAM_ATTR void mc6809::lbhs(uint16_t ea)
 {
 	if (is_c_flag_clear()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -824,7 +824,7 @@ IRAM_ATTR void mc6809::lble(uint16_t ea)
 {
 	if (is_z_flag_set() || (is_n_flag_set() && is_v_flag_clear()) || (is_n_flag_clear() && is_v_flag_set())) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -839,7 +839,7 @@ IRAM_ATTR void mc6809::lblo(uint16_t ea)
 {
 	if (is_c_flag_set()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -850,7 +850,7 @@ IRAM_ATTR void mc6809::lbls(uint16_t ea)
 {
 	if (is_c_flag_set() || is_z_flag_set()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -858,7 +858,7 @@ IRAM_ATTR void mc6809::lblt(uint16_t ea)
 {
 	if ((is_n_flag_set() && is_v_flag_clear()) || (is_n_flag_clear() && is_v_flag_set())) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -866,7 +866,7 @@ IRAM_ATTR void mc6809::lbmi(uint16_t ea)
 {
 	if (is_n_flag_set()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -874,7 +874,7 @@ IRAM_ATTR void mc6809::lbne(uint16_t ea)
 {
 	if (is_z_flag_clear()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -882,7 +882,7 @@ IRAM_ATTR void mc6809::lbpl(uint16_t ea)
 {
 	if (is_n_flag_clear()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -907,7 +907,7 @@ IRAM_ATTR void mc6809::lbvc(uint16_t ea)
 {
 	if (is_v_flag_clear()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -915,7 +915,7 @@ IRAM_ATTR void mc6809::lbvs(uint16_t ea)
 {
 	if (is_v_flag_set()) {
 		pc = ea;
-		cycles += 1;
+
 	}
 }
 
@@ -991,7 +991,7 @@ IRAM_ATTR void mc6809::leay(uint16_t ea)
 
 IRAM_ATTR void mc6809::leas(uint16_t ea)
 {
-	test_z_flag_16(ea);
+	//test_z_flag_16(ea);
 	sp = ea;
 
 	// a write to system stackpointer enables nmi's
@@ -1097,7 +1097,7 @@ IRAM_ATTR void mc6809::orcc(uint16_t ea)
 IRAM_ATTR void mc6809::page2(uint16_t ea)
 {
 	uint8_t opcode = read8(pc++);
-	cycles += cycles_page2[opcode];
+
 
 	bool am_legal;
 
@@ -1108,7 +1108,7 @@ IRAM_ATTR void mc6809::page2(uint16_t ea)
 IRAM_ATTR void mc6809::page3(uint16_t ea)
 {
 	uint8_t opcode = read8(pc++);
-	cycles += cycles_page3[opcode];
+
 
 	bool am_legal;
 
@@ -1120,56 +1120,57 @@ IRAM_ATTR void mc6809::pshs(uint16_t ea)
 {
 	Byte = read8(ea);
 
-	if (Byte & 0x80) { push_sp(pc & 0x00ff); push_sp((pc & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x40) { push_sp(us & 0x00ff); push_sp((us & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x20) { push_sp(yr & 0x00ff); push_sp((yr & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x10) { push_sp(xr & 0x00ff); push_sp((xr & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x08) { push_sp(dp);                                       cycles += 1; }
-	if (Byte & 0x04) { push_sp(br);                                       cycles += 1; }
-	if (Byte & 0x02) { push_sp(ac);                                       cycles += 1; }
-	if (Byte & 0x01) { push_sp(cc);                                       cycles += 1; }
+
+	if (Byte & 0x80) { push_sp(pc & 0x00ff); push_sp((pc & 0xff00) >> 8); }
+	if (Byte & 0x40) { push_sp(us & 0x00ff); push_sp((us & 0xff00) >> 8); }
+	if (Byte & 0x20) { push_sp(yr & 0x00ff); push_sp((yr & 0xff00) >> 8); }
+	if (Byte & 0x10) { push_sp(xr & 0x00ff); push_sp((xr & 0xff00) >> 8); }
+	if (Byte & 0x08) { push_sp(dp);                                       }
+	if (Byte & 0x04) { push_sp(br);                                       }
+	if (Byte & 0x02) { push_sp(ac);                                       }
+	if (Byte & 0x01) { push_sp(cc);                                       }
 }
 
 IRAM_ATTR void mc6809::pshu(uint16_t ea)
 {
 	Byte = read8(ea);
 
-	if (Byte & 0x80) { push_us(pc & 0x00ff); push_us((pc & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x40) { push_us(sp & 0x00ff); push_us((sp & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x20) { push_us(yr & 0x00ff); push_us((yr & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x10) { push_us(xr & 0x00ff); push_us((xr & 0xff00) >> 8); cycles += 2; }
-	if (Byte & 0x08) { push_us(dp);                                       cycles += 1; }
-	if (Byte & 0x04) { push_us(br);                                       cycles += 1; }
-	if (Byte & 0x02) { push_us(ac);                                       cycles += 1; }
-	if (Byte & 0x01) { push_us(cc);                                       cycles += 1; }
+	if (Byte & 0x80) { push_us(pc & 0x00ff); push_us((pc & 0xff00) >> 8); }
+	if (Byte & 0x40) { push_us(sp & 0x00ff); push_us((sp & 0xff00) >> 8); }
+	if (Byte & 0x20) { push_us(yr & 0x00ff); push_us((yr & 0xff00) >> 8); }
+	if (Byte & 0x10) { push_us(xr & 0x00ff); push_us((xr & 0xff00) >> 8); }
+	if (Byte & 0x08) { push_us(dp);                                       }
+	if (Byte & 0x04) { push_us(br);                                       }
+	if (Byte & 0x02) { push_us(ac);                                       }
+	if (Byte & 0x01) { push_us(cc);                                       }
 }
 
 IRAM_ATTR void mc6809::puls(uint16_t ea)
 {
 	Byte = read8(ea);
 
-	if (Byte & 0x01) { cc   = pull_sp();                                    cycles += 1; }
-	if (Byte & 0x02) { ac   = pull_sp();                                    cycles += 1; }
-	if (Byte & 0x04) { br   = pull_sp();                                    cycles += 1; }
-	if (Byte & 0x08) { dp   = pull_sp();                                    cycles += 1; }
-	if (Byte & 0x10) { Word = pull_sp() << 8; Word |= pull_sp(); xr = Word; cycles += 2; }
-	if (Byte & 0x20) { Word = pull_sp() << 8; Word |= pull_sp(); yr = Word; cycles += 2; }
-	if (Byte & 0x40) { Word = pull_sp() << 8; Word |= pull_sp(); us = Word; cycles += 2; }
-	if (Byte & 0x80) { Word = pull_sp() << 8; Word |= pull_sp(); pc = Word; cycles += 2; }
+	if (Byte & 0x01) { cc   = pull_sp();                                    }
+	if (Byte & 0x02) { ac   = pull_sp();                                    }
+	if (Byte & 0x04) { br   = pull_sp();                                    }
+	if (Byte & 0x08) { dp   = pull_sp();                                    }
+	if (Byte & 0x10) { Word = pull_sp() << 8; Word |= pull_sp(); xr = Word; }
+	if (Byte & 0x20) { Word = pull_sp() << 8; Word |= pull_sp(); yr = Word; }
+	if (Byte & 0x40) { Word = pull_sp() << 8; Word |= pull_sp(); us = Word; }
+	if (Byte & 0x80) { Word = pull_sp() << 8; Word |= pull_sp(); pc = Word; }
 }
 
 IRAM_ATTR void mc6809::pulu(uint16_t ea)
 {
 	Byte = read8(ea);
 
-	if (Byte & 0x01) { cc   = pull_us();                                    cycles += 1; }
-	if (Byte & 0x02) { ac   = pull_us();                                    cycles += 1; }
-	if (Byte & 0x04) { br   = pull_us();                                    cycles += 1; }
-	if (Byte & 0x08) { dp   = pull_us();                                    cycles += 1; }
-	if (Byte & 0x10) { Word = pull_us() << 8; Word |= pull_us(); xr = Word; cycles += 2; }
-	if (Byte & 0x20) { Word = pull_us() << 8; Word |= pull_us(); yr = Word; cycles += 2; }
-	if (Byte & 0x40) { Word = pull_us() << 8; Word |= pull_us(); sp = Word; cycles += 2; }
-	if (Byte & 0x80) { Word = pull_us() << 8; Word |= pull_us(); pc = Word; cycles += 2; }
+	if (Byte & 0x01) { cc   = pull_us();                                    }
+	if (Byte & 0x02) { ac   = pull_us();                                    }
+	if (Byte & 0x04) { br   = pull_us();                                    }
+	if (Byte & 0x08) { dp   = pull_us();                                    }
+	if (Byte & 0x10) { Word = pull_us() << 8; Word |= pull_us(); xr = Word; }
+	if (Byte & 0x20) { Word = pull_us() << 8; Word |= pull_us(); yr = Word; }
+	if (Byte & 0x40) { Word = pull_us() << 8; Word |= pull_us(); sp = Word; }
+	if (Byte & 0x80) { Word = pull_us() << 8; Word |= pull_us(); pc = Word; }
 }
 
 IRAM_ATTR void mc6809::rol(uint16_t ea)
@@ -1253,7 +1254,7 @@ IRAM_ATTR void mc6809::rti(uint16_t ea)
 		Word |= pull_sp();
 		us = Word;
 
-		cycles += 9;
+
 	}
 	Word = pull_sp() << 8;
 	Word |= pull_sp();
