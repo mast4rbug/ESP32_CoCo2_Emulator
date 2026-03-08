@@ -9,9 +9,9 @@ This project aims to bring a functional CoCo 2 emulation experience to affordabl
 
 ---
 
-## ⚠️ Beta Release
+## ⚠️ CoCo2 version 1.0
 
-This is an early **beta release**.
+This is an early **First release**.
 
 Many core features are working, but there are still known issues and likely undiscovered bugs.  
 The goal is to allow the community to test, experiment, and help improve the emulator together.
