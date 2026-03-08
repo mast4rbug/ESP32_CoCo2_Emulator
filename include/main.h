@@ -21,11 +21,50 @@
 #define __MAIN_H
 
 
-
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
 #include "SD_MMC.h"
 #include "EmuMenu.h"
 #include "ROMS_Source.h"
 #include <EEPROM.h>
+//----------------------
+#define VSYNC_PORT GPIO_NUM_1
+#define HSYNC_PORT GPIO_NUM_2
+
+
+
+
+#define PSRAM_EMU
+//#define DEBUG_ALL
+//#define DEBUG_PRINT
+//#define PRINT_DEBUG
+
+//------------
+#ifdef PRINT_DEBUG
+#define debug Serial.print
+#define debugln Serial.println
+#define debugf Serial.printf
+#else
+#define debug //
+#define debugln //
+#define debugf //
+#endif
+
+
+#define DEBUG1_SET GPIO.out_w1ts = (1 << DEBUG1)
+#define DEBUG1_CLR GPIO.out_w1tc = (1 << DEBUG1)
+
+
+#define MACRO_DO_CASSETTE_BIT_OUTPUT \
+if ((value & 0b00000010) == 0) \
+{ \
+    GPIO.out_w1tc = (1 << BOARD_CASSETTE_OUT);  /* Output 0 */ \
+} \
+else \
+{ \
+    GPIO.out_w1ts = (1 << BOARD_CASSETTE_OUT);  /* Output 1 */ \
+}
+
 
 struct SpecialFunctionStruct
 {
@@ -41,7 +80,7 @@ struct SpecialFunctionStruct
   bool AnyKeypress;   //Global VAR for any keypress check;
   bool CoCo2Mode;   //True at boot
   bool CoCo2VideoMode;
-  float CPU_Speed;
+  bool CPU_Speed;
   uint8_t Coco2VideoGenMODE;
   uint8_t Coco2GraphicMode;
   bool CoCo2_32K_UPPER_ENABLED;
@@ -95,6 +134,12 @@ struct DriveStruct
 #define MENU_PGDWN 78
 #define MENU_PGUP 75
 #define MENU_R 21
+#define MENU_F 9
+#define MENU_D 7
+#define MENU_Y 28
+#define MENU_N 17
+#define MENU_A 4
+
 
 
 
@@ -154,12 +199,51 @@ void DoCPU(void);
 #define M_FF02 0xff02
 #define M_FF03 0xff03
 #define M_FF20 0xff20
+
+#define M_FF22 0xff22
+
+//Disk access
+#define M_FF40 0xff40
+#define M_FF48 0xff48
+#define M_FF49 0xff49
+#define M_FF4A 0xff4a
+#define M_FF4B 0xff4b
+
+#define M_FFC0 0xffc0
+#define M_FFC1 0xffc1
+#define M_FFC2 0xffc2
+#define M_FFC3 0xffc3
+#define M_FFC4 0xffc4
+#define M_FFC5 0xffc5
+#define M_FFC6 0xffc6
+#define M_FFC7 0xffc7
+#define M_FFC8 0xffc8
+#define M_FFC9 0xffc9
+#define M_FFCA 0xffca
+#define M_FFCB 0xffcb
+#define M_FFCC 0xffcc
+#define M_FFCD 0xffcd
+#define M_FFCE 0xffce
+#define M_FFCF 0xffcf
+#define M_FFD0 0xffd0
+#define M_FFD1 0xffd1
+#define M_FFD2 0xffd2
+#define M_FFD3 0xffd3
+#define M_FFD4 0xffd4
+#define M_FFD5 0xffd5
 #define M_FFD8 0xffd8
 #define M_FFD9 0xffd9
+#define M_FFDE 0xffde //ROM 32K
+#define M_FFDF 0xffdf //RAM 32K UPPER
+  
+  
+  
+  #define ROM_FF22 0xff22 - ROM_OFFSET  
 
-#define CPU_FAST 0.054 // Double Speed (~1.78 MHz)
-//#define CPU_SLOW 0.67 // Single Speed (~0.79 MHz)
-#define CPU_SLOW 5 // Single Speed (~0.79 MHz)
+
+
+#define CPU_FAST true // Double Speed (~1.78 MHz)
+#define CPU_SLOW false // Single Speed (~0.79 MHz)
 
 
 
@@ -188,6 +272,7 @@ void DoCPU(void);
 #define VDG_SKYBLUE     0x867D      /* 135, 206, 235 */
 #define VDG_VIOLET      0x915C      /* 180,  46, 226 */
 
+void CheckFirmwareUpdate(void);
 
 void InitSD_Card(void);
 void InitSD_Card1(void);
@@ -204,12 +289,11 @@ bool LoadConfigFromSD(void);
 
 
 
-
+void InitPorts(void);
 uint8_t ReadCoCoButtons(void);
 uint8_t ReadJoysticks(uint8_t JoyNum);
 void CopyDiskToRamDisk(void);
 void DisplayVDGchar(uint8_t charNum, uint16_t Xpos, uint16_t Ypos);
-void VDG_Generate_MAP(void);
 bool IsButtonPressed(void);
 void ManagePeripherals_Write(uint16_t address, uint8_t value);
 void ManagePeripherals_Read(uint16_t address);
@@ -240,7 +324,7 @@ void Do_COCO2_GRAPHMODE_64X64X4(void);
 
 
 #define DEBUG1 13
-#define DEBUG2 14
+#define DEBUG2 13
 
 
 

@@ -36,11 +36,6 @@
 
 //----------------------------USB STACK-------------------------------------
 
-//#define DEBUG_ALL
-
-
-
-//#define DEBUG_PRINT
 #include <ESP32-USB-Soft-Host.h>
 #include "USB.h"
 #define KEY_SHIFT_LEFT
@@ -74,10 +69,10 @@ extern void Setup_USB(void);
 
 
 
-#define EEPROM_SIZE 2048
 
 
 
+uint8_t uint8_t_VarGlobal;
 uint8_t DEBUGloop1, DEBUGloop2;
 void Debug1Toggle(void)
 {
@@ -128,7 +123,7 @@ bool CPU_in_WAIT_STATE = false;
 
 File file;
 
-//#define PSRAM_EMU
+
 #ifndef ISR_CORE
 char text_buffer[150];
 #endif
@@ -185,9 +180,6 @@ DriveStruct Disk_Drive;
       {
         uint8_t t_data;
         ManagePeripherals_Read(address);
-#ifdef DISK_DEBUG
-        DiskDebugRead(address);
-#endif
       if (!sf.CoCo2_32K_UPPER_ENABLED)
       {
         if ((address > 0x7fff))
@@ -229,7 +221,7 @@ DriveStruct Disk_Drive;
           if (address >0x7fff)
           {
               
-              rom[address - 0x8000] = value;
+              //rom[address - 0x8000] = value;
           
           } 
           else
@@ -239,24 +231,10 @@ DriveStruct Disk_Drive;
         }
         else
         {
-          if (address >0xdfff)
-          {
-              
-              rom[address - 0x8000] = value;
-          
-          } 
-          else
-          {
               memory[address] = value;
-          }
         }
 
 
-
-
-          #ifdef DISK_DEBUG
-          DiskDebugWrite(address, value);
-#endif
 
           
         }
@@ -366,7 +344,8 @@ bool LoadConfigFromSD(void)
 
 bool WriteCoCoFile(const char* filename, uint8_t DriveNumber)
 {
-    size_t bytesWritten = 0;
+  //return true;
+  size_t bytesWritten = 0;
     
     
     File f = SD_MMC.open(filename, FILE_WRITE);
@@ -424,7 +403,7 @@ cpu_t cpu;
 
 void DoCPU(void)
 {
-  Debug1Toggle();
+  //Debug1Toggle();
   
   if (CPU_in_WAIT_STATE)
   {
@@ -433,7 +412,7 @@ void DoCPU(void)
       return;
     }
     
-    if (gpio_get_level(GPIO_NUM_2) != 0)
+    if (gpio_get_level(VSYNC_PORT) != 0)  //Manage CWAI instruction
     {
       return;
     }
@@ -442,8 +421,15 @@ void DoCPU(void)
       CPU_in_WAIT_STATE = false;
     }
   }
+  //Debug1Toggle();
+  
   cpu.execute();
   cpu.execute();
+  if (sf.CPU_Speed == CPU_FAST)
+  {
+    cpu.execute();
+    cpu.execute();
+  }
 
   return;
 }
@@ -460,7 +446,8 @@ void CopyDiskToRamDisk(void)
 
 
 
-    const PinConfig pins(0,0,0,8,9,  0,0,0,6, 7, 0,  0,0,0,4,5,  1,2);
+//    const PinConfig pins(0,0,0,8,9,  0,0,0,6, 7, 0,  0,0,0,4,5,  2,1);
+    const PinConfig pins(0,0,8,9,0,  0,0,0,6, 7, 0,  0,0,0,4,5,  2,1);
 //                             B B X       G  G  X         R  R
     //6 bit mode for Coco 3    0 1 X       0  1  X         0  1
 
@@ -513,8 +500,12 @@ void InitSD_Card1(void)
 
   }
 }
-
-
+extern void flashFromSD(const char* filename);
+void CheckFirmwareUpdate(void)
+{
+  debugln("Before flash");
+  flashFromSD("/qprcx.rty");  //Random name for flash file (Created from the Flash menu).  Will be ereased after flash.
+}
 
 
 void InitSD_Card(void)
@@ -523,39 +514,51 @@ void InitSD_Card(void)
   SD_MMC.setPins(SD_MMC_CLK, SD_MMC_CMD, SD_MMC_D0);
   
   if (!SD_MMC.begin("/sdcard", true, false, SDMMC_FREQ_DEFAULT, 5)) {
-    Serial.println("Card Mount Failed");
+    debugln("Card Mount Failed");
     return;
   }
   uint8_t cardType = SD_MMC.cardType();
   if(cardType == CARD_NONE){
-    Serial.println("No SD_MMC card attached");
+    debugln("No SD_MMC card attached");
     return;
   }
 
   Serial.print("SD_MMC Card Type: ");
   if(cardType == CARD_MMC){
-    Serial.println("MMC");
+    debugln("MMC");
   } else if(cardType == CARD_SD){
-    Serial.println("SDSC");
+    debugln("SDSC");
   } else if(cardType == CARD_SDHC){
-    Serial.println("SDHC");
+    debugln("SDHC");
   } else {
-    Serial.println("UNKNOWN");
+    debugln("UNKNOWN");
   }
 
 }
+
+#define BOARD_CASSETTE_OUT 13
+#define BOARD_CASSETTE_IN 14
+#define BOARD_CASSETTE_RELAY 10
 
 #define ROM_OFFSET 0x8000
 #define RAM_MODE 0x0000
 void InitPeripherals_and_Others(void)
 {
-  EEPROM.begin(EEPROM_SIZE);
+  
 
+  for(uint32_t i = 0; i !=65536; i++)
+  {
+      memory[i] = 255;
+  }
   
   Serial.begin(921600);
   delay(10);
   
   InitSD_Card();
+  
+  CheckFirmwareUpdate();
+  
+  
   InitDisks();
 
   cpu.assign_nmi_line(&sf.nmi_pin);
@@ -596,13 +599,10 @@ void InitPeripherals_and_Others(void)
   DiskAccess.NMI_Int_Started = false;
   DiskAccess.NMI_Delay = 0;
 
-  ledcSetup (0, 40000, 8);  // PWM Sound Configuration
-  ledcAttachPin(47, 0);                   //
-  ledcWrite(0,127);
+  InitPorts();
 
-
-  analogReadResolution(8);
-
+  
+  
   CopyCoCo2ROMS();
   //CopyCoCo3ROMS();
 	
@@ -622,7 +622,23 @@ void InitPeripherals_and_Others(void)
 
 }
 
+void InitPorts(void)
+{
+  ledcSetup (0, 40000, 8);  // PWM Sound Configuration
+  ledcAttachPin(47, 0);                   //
+  ledcWrite(0,127);
 
+
+  //analogReadResolution(8);
+  //int initval = analogRead(BOARD_CASSETTE_IN);
+  //adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_0); // 0-1.1V
+  
+  //pinMode(BOARD_CASSETTE_OUT,OUTPUT);
+  //pinMode(BOARD_CASSETTE_RELAY, OUTPUT);
+  //digitalWrite(BOARD_CASSETTE_RELAY, LOW);  //Disable Relay.
+
+  return;
+}
 void SetVideoMode(uint8_t VideoMode)
 {
   vga->stop();
@@ -654,7 +670,7 @@ void SetVideoMode(uint8_t VideoMode)
 
 
 
-const int Field_Synch_Interrupt_PIN = 2;  // VSynch pin
+const int Field_Synch_Interrupt_PIN = VSYNC_PORT;  // VSynch pin
 
 
 void IRAM_ATTR Field_Synch_Interrupt_Flag() 
@@ -821,7 +837,6 @@ void setup()
 
 
 
-
   InitPeripherals_and_Others();
 
 #define SERIAL1_TX 41
@@ -861,23 +876,38 @@ void loop()
 #define COCO2_GRAPHMODE_32X16_8X12 0b0 //Text 32x16
 #define COCO2_GRAPHMODE_256X192X2 0b11110110  //PMODE 4
 #define COCO2_GRAPHMODE_128X192X4 0b11100110  //PMODE 3  OK
+
+
 #define COCO2_GRAPHMODE_128X192X2 0b11010101  //PMODE 2
 #define COCO2_GRAPHMODE_128X96X4 0b11000100  //PMODE 1
+#define COCO2_GRAPHMODE_128X96X4_1 0b11110100  //PMODE 1 Other mode??
+
+
 #define COCO2_GRAPHMODE_128X96X2 0b10110011  //PMODE 0
+
+
 //---------Other modes in assembly language only, not officialy supported in Basic Coco 2
 #define COCO2_GRAPHMODE_128X64X4 0b10100010  //
 #define COCO2_GRAPHMODE_128X64X2 0b10010001  //
+
 #define COCO2_GRAPHMODE_64X64X4 0b10000001  //
 
+
+#ifdef DEBUG_ALL
+#define WAIT_VSYNCH_LOW()  while(gpio_get_level(VSYNC_PORT) != 0) {DEBUG1_SET;}DEBUG1_CLR
+#else
+#define WAIT_VSYNCH_LOW()  while(gpio_get_level(VSYNC_PORT) != 0) {}
+#endif
 #define X_OFFSET_32 312
 void IRAM_ATTR VideoCore(void *pvParameters) 
 {
   uint8_t ModeValue;
   while (true) 
   {
+    //vTaskDelay(1);
     if (sf.DIRECT_Key_Code == MENU_F12) //Emulator menu entrance
     {
-      Serial.println("In Emulator Menu");
+      
       CPU_in_WAIT_STATE = true;
       sf.CPU_HALTED_BY_EMULATOR = true;
       vTaskDelay(1);
@@ -892,6 +922,7 @@ void IRAM_ATTR VideoCore(void *pvParameters)
 
 
     ModeValue = sf.Coco2GraphicMode & 0b11110111;    //Remove the Color bit
+    
     switch (ModeValue)
     {
     
@@ -919,7 +950,8 @@ void IRAM_ATTR VideoCore(void *pvParameters)
       break;
 
       case COCO2_GRAPHMODE_128X96X4:
-        Do_COCO2_GRAPHMODE_128X96X4();
+      case COCO2_GRAPHMODE_128X96X4_1:  
+      Do_COCO2_GRAPHMODE_128X96X4();
       break;
 
       case COCO2_GRAPHMODE_128X96X2:
@@ -953,23 +985,16 @@ break;
       NOP();
     }*/
 
+
+    WAIT_VSYNCH_LOW();
+  
+    vga->show();
+    
     if (sf.PHYSICAL_Drive_Must_Be_Saved)
     {
       WriteCoCoFile((const char*)Disk_Drive.Name_Disk[DiskAccess.DriveSelected],DiskAccess.DriveSelected);  
       sf.PHYSICAL_Drive_Must_Be_Saved = false;
     }
-
-    if (gpio_get_level(GPIO_NUM_2) == 0)
-    {
-      NOP();
-    }
-
-
-    //Debug2Low();
-    //Debug2Toggle();
-    //sf.V_Synch = false;
-  
-    vga->show();
 
     FillKeyboardMatrix();
   }
@@ -1457,10 +1482,16 @@ void Do_COCO2_GRAPHMODE_128X96X4(void)
   }
   else
   {
+    Color[0] = 0b00000000;  // Black
+    Color[2] = 0b11100000;  // Red
+    Color[1] = 0b00000011;  // blue
+    Color[3] = 0b11111111;  // White
+    /*
     Color[0] = 0xff; //blanc
     Color[1] = 0b01011011;  //Turquoise
     Color[2] = 0b11100011;  //lilas
     Color[3] = 0b11101000;  //orange(buff)
+    */
   }  
 
   for (Yloop = 24; Yloop <216; Yloop+=2)
@@ -2119,6 +2150,44 @@ void Do_COCO2_GRAPHMODE_32X16_8X12(void)
 
 
 
+void CopyCoCo2ROMS1(void)
+{
+  uint32_t LoopRomSource, LoopRam1;
+
+  // Copy extbas11 to 0x8000 (8K)
+  LoopRam1 = 0x8000;
+  for (LoopRomSource = 0; LoopRomSource < 8192; LoopRomSource++)
+    memory[LoopRam1++] = extbas11[LoopRomSource];
+
+  // Copy bas12 to 0xA000 (8K)
+  LoopRam1 = 0xA000;
+  for (LoopRomSource = 0; LoopRomSource < 8192; LoopRomSource++)
+  memory[LoopRam1++] = bas13[LoopRomSource];
+
+
+  // Copy disk11 to 0xC000 (8K)
+  LoopRam1 = 0xC000;
+  for (LoopRomSource = 0; LoopRomSource < 8192; LoopRomSource++)
+    memory[LoopRam1++] = disk11[LoopRomSource];
+
+  // copy memory[0x8000 - 0xFFFF] to rom[0 - 0x7FFF]
+  LoopRomSource = 0;
+  for (LoopRam1 = 0x8000; LoopRam1 < 0x10000; LoopRam1++)
+  {
+    rom[LoopRomSource++] = memory[LoopRam1];
+  }
+  // Reset vectors
+  
+  uint32_t VectorsLoop = 0;
+  LoopRomSource = 0xfff0 - 0x8000;
+  for (VectorsLoop = 0; VectorsLoop !=16 ; VectorsLoop++)
+  {
+    memory[LoopRomSource + 0x8000] = ResetVectors[VectorsLoop];
+    rom[LoopRomSource++] = ResetVectors[VectorsLoop];
+  }
+}
+
+
 void CopyCoCo2ROMS(void)
 {
   uint32_t LoopRomSource, LoopRam1;
@@ -2157,8 +2226,6 @@ void CopyCoCo2ROMS(void)
 }
 
 
-
-
 void CopyCoCo3ROMS(void)
 {
   uint32_t LoopRom1, LoopRam1, LoopRomSource;
@@ -2188,44 +2255,6 @@ void CopyCoCo3ROMS(void)
   return;
 }
 
-
-  #define M_FF22 0xff22
-
-  //Disk access
-  #define M_FF40 0xff40
-  #define M_FF48 0xff48
-  #define M_FF49 0xff49
-  #define M_FF4A 0xff4a
-  #define M_FF4B 0xff4b
-
-  #define M_FFC0 0xffc0
-  #define M_FFC1 0xffc1
-  #define M_FFC2 0xffc2
-  #define M_FFC3 0xffc3
-  #define M_FFC4 0xffc4
-  #define M_FFC5 0xffc5
-  #define M_FFC6 0xffc6
-  #define M_FFC7 0xffc7
-  #define M_FFC8 0xffc8
-  #define M_FFC9 0xffc9
-  #define M_FFCA 0xffca
-  #define M_FFCB 0xffcb
-  #define M_FFCC 0xffcc
-  #define M_FFCD 0xffcd
-  #define M_FFCE 0xffce
-  #define M_FFCF 0xffcf
-  #define M_FFD0 0xffd0
-  #define M_FFD1 0xffd1
-  #define M_FFD2 0xffd2
-  #define M_FFD3 0xffd3
-  #define M_FFD4 0xffd4
-  #define M_FFD5 0xffd5
-  #define M_FFDE 0xffde //ROM 32K
-  #define M_FFDF 0xffdf //RAM 32K UPPER
-  
-  
-  
-  #define ROM_FF22 0xff22 - ROM_OFFSET  
 /*
 DRQ = 1 when the Computer can read data or write data to the register.
 DRQ is 0 when is busy.
@@ -2552,6 +2581,7 @@ void InitDisks(void)
     {
       case M_FF20:
         rom[ROM_FF20] = value;
+        
         if ((rom[ROM_FF23] & 0b00001000)!=0)  //So, Sound is enabled
         {
           ledcWrite(0,value);
@@ -2573,10 +2603,12 @@ void InitDisks(void)
       break;
 
       case M_FFD9:
+      Serial.println("F");
         sf.CPU_Speed = CPU_FAST;
       break;
       case M_FFD8:
-        sf.CPU_Speed = CPU_SLOW;
+      Serial.println("S");
+      sf.CPU_Speed = CPU_SLOW;
       break;
 //----------------Disk Related---------------
    case M_FF40:
@@ -2606,8 +2638,14 @@ void InitDisks(void)
     
       rom[ROM_FF48] = value;
       #ifdef DEBUG_ALL
-      Serial.print("Track Number:");
-      Serial.println(rom[ROM_FF49]);
+      Serial.print("Drive:");
+      Serial.print(GetDriveNumber(rom[ROM_FF40]));
+      Serial.print(" Track:");
+      Serial.print(rom[ROM_FF49]);
+      Serial.print(" Sec:");
+      Serial.println(rom[ROM_FF4A]);
+      Serial.print("FF48:");
+      Serial.println(value,HEX);
       #endif
       DiskAccess.DRIVE_COMMAND = value;
       switch (value)
@@ -2637,6 +2675,7 @@ void InitDisks(void)
         DiskAccess.IsinReadProcess = true;
         DiskAccess.RW_Process_ByteRemainingCounter = 257; //Init the loop counter for data to be transfered;
         DiskAccess.TrackPos = rom[ROM_FF49];
+        DiskAccess.SectorPos = rom[ROM_FF4A];
         MACRO_TRACK_R;
         rom[ROM_FF48] = 0;  //Reset the bit
         
@@ -2654,6 +2693,12 @@ void InitDisks(void)
         DiskAccess.IsInWriteProcess = true;
         DiskAccess.RW_Process_ByteRemainingCounter = 257; //Init the loop counter for data to be transfered;
         DiskAccess.TrackPos = rom[ROM_FF49];
+        DiskAccess.SectorPos = rom[ROM_FF4A];
+        Serial.print("T:");
+        Serial.print(rom[ROM_FF49]);
+        Serial.print(" S:");
+        Serial.println(rom[ROM_FF4A]);
+        
         MACRO_TRACK_W;
         rom[ROM_FF48] = M_DRQ_BIT_READY;  //Reset the bit
         break;
@@ -2691,6 +2736,7 @@ void InitDisks(void)
           Disk_Drive.isFileAlreadyOpen = true;
         }
 
+        //Serial.print("W");
         WriteDiskByte(DiskAccess.DSK_FILE_DataPTR, rom[ROM_FF4B]);
         DiskAccess.DSK_FILE_DataPTR++;
         rom[ROM_FF48] = M_DRQ_BIT_READY;
@@ -2733,10 +2779,10 @@ void InitDisks(void)
 
 //------------All the next logic is for videomodes---------------------
     case M_FF22:
-      rom[ROM_FF22] = value;
-      //sf.Coco2GraphicMode &= (0b00000111);  //Keep the V2 V1 V0
-      //sf.Coco2GraphicMode |= (value & 0b11111000); //Read the VDG values only.
       
+      
+
+      rom[ROM_FF22] = value;
       sf.Coco2GraphicMode = (sf.Coco2GraphicMode & 0b00000111) | (value & 0b11111000);      
       
       break;

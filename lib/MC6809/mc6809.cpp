@@ -45,7 +45,7 @@ mc6809::mc6809()
 	firq_line = &default_pin;
 	irq_line = &default_pin;
 
-	cycles = 0;
+	//cycles = 0;
 
 	index_regs[0b00] = &xr;
 	index_regs[0b01] = &yr;
@@ -105,7 +105,7 @@ void mc6809::reset()
 
 IRAM_ATTR uint16_t mc6809::execute()
 {
-	uint32_t old_cycles = cycles;
+	//uint32_t old_cycles = cycles;
 
 	//if ((*nmi_line == false) && (old_nmi_line == true) && nmi_enabled) {
 	if (*nmi_line == false)
@@ -138,7 +138,7 @@ IRAM_ATTR uint16_t mc6809::execute()
 		} 
 	}
 
-	old_nmi_line = *nmi_line;
+	//old_nmi_line = *nmi_line;
 	//return cycles - old_cycles;
 	return 0;
 }
@@ -179,7 +179,7 @@ void mc6809::nmi()
 	/*
 	 * TODO: Can't find this in the documentation
 	 */
-	cycles += 19;
+	//cycles += 19;
 }
 
 void mc6809::firq()
@@ -197,7 +197,7 @@ void mc6809::firq()
 	/*
 	 * can't find this in the documentation
 	 */
-	cycles += 10;
+	//cycles += 10;
 }
 
 void mc6809::irq()
@@ -223,7 +223,7 @@ void mc6809::irq()
 	/*
 	 * can't find this in the documentation
 	 */
-	cycles += 19;
+	//cycles += 19;
 }
 
 void mc6809::illegal_opcode()
@@ -250,7 +250,7 @@ void mc6809::illegal_opcode()
 	/*
 	 * same as nmi number of cycles
 	 */
-	cycles += 19;
+	//cycles += 19;
 }
 
 /*

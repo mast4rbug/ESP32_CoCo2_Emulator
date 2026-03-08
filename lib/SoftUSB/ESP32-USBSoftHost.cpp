@@ -1,5 +1,8 @@
 
+
 #include "./ESP32-USBSoftHost.hpp"
+#define DEBUG1_SET GPIO.out_w1ts = (1 << 13)
+#define DEBUG1_CLR GPIO.out_w1tc = (1 << 13)
 
 #if defined CONFIG_ESP_SYSTEM_MEMPROT_FEATURE || defined FORCE_TEMPLATED_NOPS || defined CONFIG_IDF_TARGET_ESP32S3
   #pragma message "memory protection features disabled, templated asm nop() will be used"
@@ -179,8 +182,10 @@ uint32_t UsbCheck = 0;
     if (UsbCheck == MAX_USB_CHECK)
     {
       UsbCheck = 0;
-      //Debug1Toggle();
+      
+      
       usb_process();
+      
     }
     DoCPU();
     /*for (uint16_t l11 = 0; l11 != 400; l11++)
@@ -209,6 +214,8 @@ bool USB_SOFT_HOST::init( usb_pins_config_t pconf, ondetectcb_t onDetectCB, prin
   USB_SOFT_HOST::setTaskTicker( onTickCB );
   if( _init( pconf ) ) {
     Serial.println("Attaching Timer Task");
+    delay(150);
+
     xTaskCreatePinnedToCore(USB_SOFT_HOST::TimerTask, "USB Soft Host Timer Task", 8192, NULL, 5, NULL, core);
     //xTaskCreate(USB_SOFT_HOST::TimerTask, "USB Soft Host Timer Task", 8192, NULL, priority, NULL);
     Serial.printf("USB Soft Host Group timer task is now running on core #%d with priority %d\n", core, priority);
@@ -303,7 +310,8 @@ bool USB_SOFT_HOST::_init( usb_pins_config_t pconf )
   timer_init(TIMER_GROUP_0, TIMER_0, &config);
   timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0x00000000ULL);
   //timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, (double)TIMER_INTERVAL0_SEC * TIMER_SCALE);
-  timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 180);
+  //timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 180);
+  timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 200);
   Serial.println("Enable interrupt");
   timer_enable_intr(TIMER_GROUP_0, TIMER_0);
   Serial.println("Register ISR");
