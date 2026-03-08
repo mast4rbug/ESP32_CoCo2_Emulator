@@ -87,7 +87,7 @@ This diagram shows the basic connections required to run the emulator on the ESP
 - Implement remaining obscure video modes  
 - Proper interrupt handling (H-SYNC & Data Direction Registers)
 
--After all major issues fixed, I will start working on the CoCo 3 version (Using the same hardware).  I already have a KIND-OF working PROOF-OF-CONCEPT code for the CoCo 3. 
+-I'm working on the CoCo 3 version (Using the same hardware).  The development works fine and a lot of softwares are working in it. 
 ---
 
 ## 🧩 Contribution
